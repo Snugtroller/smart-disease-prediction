@@ -1,0 +1,10 @@
+flask
+flask-cors
+pandas
+scikit-learn
+xgboost
+shap
+transformers
+torch           # required by many HF models
+joblib
+numpy
