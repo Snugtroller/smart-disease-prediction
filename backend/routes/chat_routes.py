@@ -24,8 +24,15 @@ def chat():
 
         nlp_models = current_app.config["NLP_MODELS"]
         response_payload = analyze_and_respond(message, nlp_models)
+        
+        # Format response to match frontend expectations
+        formatted_response = {
+            "response": response_payload.get("bot_reply", ""),
+            "sentiment": response_payload.get("sentiment", {}).get("label", "").lower(),
+            "confidence": response_payload.get("sentiment", {}).get("score", 0)
+        }
 
-        return jsonify(response_payload), 200
+        return jsonify(formatted_response), 200
 
     except Exception as e:
         print(f"[ERROR] /api/chat failed: {e}")

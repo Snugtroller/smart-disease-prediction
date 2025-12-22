@@ -8,3 +8,5 @@ transformers
 torch           # required by many HF models
 joblib
 numpy
+google-generativeai  # Gemini API
+python-dotenv       # for environment variables

@@ -1,5 +1,9 @@
 from flask import Flask
 from flask_cors import CORS
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from services.model_loader import load_disease_models, load_nlp_models
 from routes.predict_routes import predict_bp
@@ -38,4 +42,4 @@ app = create_app()
 
 if __name__ == "__main__":
     # For development; in production use gunicorn/uwsgi, etc.
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)

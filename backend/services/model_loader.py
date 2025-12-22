@@ -34,20 +34,15 @@ def load_disease_models() -> Dict[str, Any]:
 def load_nlp_models() -> Dict[str, Any]:
     """
     Load NLP models for mental health chatbot.
-    For MVP: keep it simple / lightweight; you can later swap to proper HF pipelines.
+    Only loading sentiment analyzer - using Gemini AI for responses.
     """
     from transformers import pipeline
 
-    # NOTE: These can be heavy; consider one-time downloading in setup phase.
+    # Only load sentiment analyzer (lightweight)
     sentiment_analyzer = pipeline("sentiment-analysis")
-    advice_generator = pipeline(
-        "text2text-generation",
-        model="google/flan-t5-small"  # you can later change to flan-t5-large
-    )
 
-    print("[INFO] NLP models loaded: sentiment_analyzer, advice_generator")
+    print("[INFO] NLP models loaded: sentiment_analyzer")
 
     return {
         "sentiment_analyzer": sentiment_analyzer,
-        "advice_generator": advice_generator,
     }
