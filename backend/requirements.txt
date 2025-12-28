@@ -10,3 +10,7 @@ joblib
 numpy
 google-generativeai  # Gemini API
 python-dotenv       # for environment variables
+
+# Python 3.9 compatibility + macOS LibreSSL warning mitigation
+importlib-metadata>=4.12; python_version < "3.10"
+urllib3<2

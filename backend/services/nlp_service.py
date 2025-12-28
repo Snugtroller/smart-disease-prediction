@@ -283,6 +283,19 @@ def generate_fallback_response(message: str, sentiment: str) -> str:
     )
 
 
+def get_llm_status() -> Dict[str, Any]:
+    """Return whether Gemini is enabled.
+
+    Used by a lightweight status endpoint so the frontend can verify whether
+    the chatbot is using Gemini or fallback responses.
+    """
+    return {
+        "provider": "gemini" if gemini_model else "fallback",
+        "gemini_enabled": bool(gemini_model),
+        "model": getattr(gemini_model, "model_name", None) if gemini_model else None,
+    }
+
+
 # -----------------------------------------------------------------------------
 # Public API
 # -----------------------------------------------------------------------------

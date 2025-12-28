@@ -1,28 +1,73 @@
-// src/components/HealthForm.jsx
 "use client";
 
 import { useState } from "react";
 import { predictDisease } from "../lib/api";
 
-const initialForm = {
+/* =========================
+   INITIAL STATES
+========================= */
+
+const diabetesInitial = {
   disease: "diabetes",
   age: "",
   bmi: "",
   glucose: "",
 };
 
+const hypertensionInitial = {
+  disease: "hypertension",
+  age: "",
+  sex: "1",
+  trestbps: "",
+  chol: "",
+  fbs: "0",
+  restecg: "0",
+  exang: "0",
+  slope: "1",
+};
+
+/* =========================
+   COMPONENT
+========================= */
+
 export default function HealthForm() {
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(diabetesInitial);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
+  const formatNum = (value) =>
+    value === undefined || value === null || Number.isNaN(Number(value))
+      ? "-"
+      : Number(value).toFixed(3);
+
+  const featureLabels = {
+    age: "Age",
+    sex: "Sex",
+    bmi: "BMI",
+    glucose: "Fasting Glucose",
+    trestbps: "Resting BP",
+    chol: "Cholesterol",
+    fbs: "Fasting Blood Sugar",
+    restecg: "Resting ECG",
+    exang: "Exercise Angina",
+    slope: "ST Slope",
+  };
+
+  /* =========================
+     HANDLERS
+  ========================= */
+
+  const handleDiseaseChange = (e) => {
+    const disease = e.target.value;
+    setForm(disease === "diabetes" ? diabetesInitial : hypertensionInitial);
+    setResult(null);
+    setError("");
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -32,120 +77,149 @@ export default function HealthForm() {
     setResult(null);
 
     try {
-      const payload = {
-        disease: form.disease,
-        age: Number(form.age),
-        bmi: Number(form.bmi),
-        glucose: Number(form.glucose),
-      };
+      let payload;
+
+      if (form.disease === "diabetes") {
+        payload = {
+          disease: "diabetes",
+          age: Number(form.age),
+          bmi: Number(form.bmi),
+          glucose: Number(form.glucose),
+        };
+      } else {
+        // 🔥 EXACT FEATURES USED BY MODEL
+        payload = {
+          disease: "hypertension",
+          age: Number(form.age),
+          sex: Number(form.sex),
+          trestbps: Number(form.trestbps),
+          chol: Number(form.chol),
+          fbs: Number(form.fbs),
+          restecg: Number(form.restecg),
+          exang: Number(form.exang),
+          slope: Number(form.slope),
+        };
+      }
 
       const data = await predictDisease(payload);
       setResult(data);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch prediction. Please try again.");
+      setError("Prediction failed. Please check inputs.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleReset = () => {
-    setForm(initialForm);
+    setForm(form.disease === "diabetes" ? diabetesInitial : hypertensionInitial);
     setResult(null);
     setError("");
   };
 
+  /* =========================
+     UI
+  ========================= */
+
   return (
-    <div className="w-full max-w-xl mx-auto bg-white shadow-md rounded-2xl p-6 space-y-4">
-      <h2 className="text-2xl font-semibold text-slate-800 mb-2">
-        Smart Disease Risk Prediction
+    <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-3xl p-8 border text-slate-900">
+
+      <h2 className="text-3xl font-bold mb-2 text-slate-900">
+        🏥 AI-Based Disease Risk Assessment
       </h2>
-      <p className="text-sm text-slate-500">
-        Enter basic health parameters to estimate chronic disease risk and get
-        explainable AI feedback.
+      <p className="text-slate-700 mb-6">
+        Enter your health parameters for explainable AI prediction
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-        {/* Disease selector */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Disease Type
-          </label>
-          <select
-            name="disease"
-            value={form.disease}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="diabetes">Diabetes</option>
-            <option value="heart">Heart Disease</option>
-            <option value="hypertension">Hypertension</option>
-          </select>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
 
-        {/* Age */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Age (years)
-          </label>
-          <input
-            type="number"
-            name="age"
-            value={form.age}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., 45"
-            min="0"
-          />
-        </div>
+        {/* Disease Selector */}
+        <Select
+          label="Select Disease"
+          name="disease"
+          value={form.disease}
+          onChange={handleDiseaseChange}
+          options={[
+            { label: "Type 2 Diabetes", value: "diabetes" },
+            { label: "Hypertension", value: "hypertension" },
+          ]}
+        />
 
-        {/* BMI */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            BMI
-          </label>
-          <input
-            type="number"
-            step="0.1"
-            name="bmi"
-            value={form.bmi}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., 26.5"
-            min="0"
-          />
-        </div>
+        {/* =========================
+           DIABETES
+        ========================= */}
+        {form.disease === "diabetes" && (
+          <div className="grid md:grid-cols-2 gap-4">
+            <Input label="Age (years)" name="age" value={form.age} onChange={handleChange} />
+            <Input label="BMI" name="bmi" value={form.bmi} onChange={handleChange} />
+            <Input
+              label="Fasting Glucose (mg/dL)"
+              name="glucose"
+              value={form.glucose}
+              onChange={handleChange}
+              full
+            />
+          </div>
+        )}
 
-        {/* Glucose */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
-            Fasting Glucose (mg/dL)
-          </label>
-          <input
-            type="number"
-            name="glucose"
-            value={form.glucose}
-            onChange={handleChange}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., 140"
-            min="0"
-          />
-        </div>
+        {/* =========================
+           HYPERTENSION (BRFSS)
+        ========================= */}
+        {form.disease === "hypertension" && (
+          <div className="grid md:grid-cols-2 gap-4">
 
-        {/* Actions */}
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
-          >
-            {loading ? "Predicting..." : "Predict Risk"}
+            <Input label="Age (years)" name="age" value={form.age} onChange={handleChange} />
+            <Select label="Sex" name="sex" value={form.sex} onChange={handleChange}
+              options={[
+                { label: "Female", value: "0" },
+                { label: "Male", value: "1" },
+              ]}
+            />
+
+            <Input label="Resting BP (mm Hg)" name="trestbps" value={form.trestbps} onChange={handleChange} />
+            <Input label="Cholesterol (mg/dL)" name="chol" value={form.chol} onChange={handleChange} />
+
+            <Select label="Fasting Blood Sugar > 120 mg/dL" name="fbs" value={form.fbs} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
+              ]}
+            />
+
+            <Select label="Resting ECG" name="restecg" value={form.restecg} onChange={handleChange}
+              options={[
+                { label: "Normal", value: "0" },
+                { label: "ST-T Abnormality", value: "1" },
+                { label: "LV Hypertrophy", value: "2" },
+              ]}
+            />
+
+            <Select label="Exercise-Induced Angina" name="exang" value={form.exang} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
+              ]}
+            />
+
+            <Select label="Slope of ST Segment" name="slope" value={form.slope} onChange={handleChange}
+              options={[
+                { label: "Upsloping", value: "0" },
+                { label: "Flat", value: "1" },
+                { label: "Downsloping", value: "2" },
+              ]}
+            />
+          </div>
+        )}
+
+        {/* Buttons */}
+        <div className="flex gap-4 pt-4">
+          <button type="submit" disabled={loading}
+            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
+            {loading ? "Analyzing..." : "🔍 Predict Risk"}
           </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-sm text-slate-500 hover:text-slate-700"
-          >
+
+          <button type="button" onClick={handleReset}
+            className="px-6 py-3 bg-gray-100 rounded-xl">
             Reset
           </button>
         </div>
@@ -153,72 +227,103 @@ export default function HealthForm() {
 
       {/* Error */}
       {error && (
-        <div className="mt-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
+        <div className="mt-4 bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl">
+          ⚠️ {error}
         </div>
       )}
 
       {/* Result */}
       {result && (
-        <div className="mt-4 border-t border-slate-100 pt-4 space-y-3">
-          <h3 className="text-lg font-semibold text-slate-800">
-            Prediction Result
-          </h3>
-
-          <div className="text-sm">
-            <p>
-              <span className="font-medium">Disease:</span>{" "}
-              {result.disease?.toUpperCase()}
-            </p>
-            <p>
-              <span className="font-medium">Risk Score:</span>{" "}
-              {result.risk_score?.toFixed(2)}
-            </p>
-            <p>
-              <span className="font-medium">Risk Level:</span>{" "}
-              <span
-                className={
-                  result.risk_label === "High"
-                    ? "text-red-600 font-semibold"
-                    : result.risk_label === "Moderate"
-                    ? "text-yellow-600 font-semibold"
-                    : "text-green-600 font-semibold"
-                }
-              >
+        <div className="mt-6 bg-blue-50 p-6 rounded-2xl border">
+          <div className="grid md:grid-cols-3 text-center gap-4">
+            <div>
+              <p className="text-sm text-slate-600">Disease</p>
+              <p className="font-bold text-lg">{result.disease_name}</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-600">Risk</p>
+              <p className="text-2xl font-bold">{(result.risk_score * 100).toFixed(1)}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-600">Level</p>
+              <p className={`font-bold ${
+                result.risk_label === "High" ? "text-red-600" :
+                result.risk_label === "Moderate" ? "text-yellow-600" :
+                "text-green-600"
+              }`}>
                 {result.risk_label}
-              </span>
-            </p>
+              </p>
+            </div>
           </div>
 
-          {/* SHAP explanation */}
-          {Array.isArray(result.explanation) && result.explanation.length > 0 && (
-            <div className="text-sm">
-              <p className="font-medium mb-1">Top contributing factors:</p>
-              <ul className="list-disc list-inside space-y-0.5">
-                {result.explanation.map((item, idx) => (
-                  <li key={idx}>
-                    <span className="font-medium capitalize">
-                      {item.feature}:
-                    </span>{" "}
-                    value {item.value}{" "}
-                    <span className="text-slate-500">
-                      (SHAP: {item.shap_value.toFixed(3)})
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          {/* Advice */}
+          {result.advice && (
+            <div className="mt-4 bg-white border border-blue-100 rounded-xl p-4 text-slate-800">
+              <p className="text-sm font-semibold text-blue-700 mb-1">Clinical-style advice</p>
+              <p className="leading-relaxed">{result.advice}</p>
             </div>
           )}
 
-          {/* GenAI advice */}
-          {result.advice && (
-            <div className="text-sm bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 mt-2">
-              <p className="font-medium mb-1">Preventive Advice (AI-generated):</p>
-              <p className="whitespace-pre-line">{result.advice}</p>
+          {/* SHAP / Explainability */}
+          {Array.isArray(result.explanation) && result.explanation.length > 0 && (
+            <div className="mt-4 bg-white border border-blue-100 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-blue-700">Explainability (SHAP)</p>
+                <p className="text-xs text-slate-500">Top contributing features</p>
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                {result.explanation.map((item, idx) => (
+                  <div key={`${item.feature}-${idx}`} className="flex justify-between items-center bg-blue-50/60 border border-blue-100 rounded-lg px-3 py-2">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{featureLabels[item.feature] || item.feature}</p>
+                      <p className="text-xs text-slate-500">Value: {formatNum(item.value)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500">SHAP</p>
+                      <p className="font-mono text-sm text-blue-700">{formatNum(item.shap_value)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
       )}
+
     </div>
   );
 }
+
+/* =========================
+   REUSABLE INPUTS
+========================= */
+
+const Input = ({ label, name, value, onChange, full }) => (
+  <div className={full ? "md:col-span-2" : ""}>
+    <label className="block text-sm mb-1 text-slate-800">{label}</label>
+    <input
+      type="number"
+      name={name}
+      value={value}
+      onChange={onChange}
+      required
+      className="w-full border rounded-xl px-4 py-2 text-slate-900"
+    />
+  </div>
+);
+
+const Select = ({ label, name, value, onChange, options }) => (
+  <div>
+    <label className="block text-sm mb-1 text-slate-800">{label}</label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      className="w-full border rounded-xl px-4 py-2 text-slate-900"
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  </div>
+);

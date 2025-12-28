@@ -1,8 +1,20 @@
 from flask import Blueprint, current_app, request, jsonify
 
-from services.nlp_service import analyze_and_respond
+from services.nlp_service import analyze_and_respond, get_llm_status
 
 chat_bp = Blueprint("chat_bp", __name__)
+
+
+@chat_bp.route("/chat/status", methods=["GET"])
+def chat_status():
+    """GET /api/chat/status
+
+    Returns whether the backend is currently using Gemini or fallback responses.
+    """
+    try:
+        return jsonify(get_llm_status()), 200
+    except Exception:
+        return jsonify({"provider": "unknown", "gemini_enabled": False, "model": None}), 200
 
 
 @chat_bp.route("/chat", methods=["POST"])
