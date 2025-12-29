@@ -11,7 +11,10 @@ const diabetesInitial = {
   disease: "diabetes",
   age: "",
   bmi: "",
-  glucose: "",
+  highbp: "0",
+  highchol: "0",
+  genhlth: "1",
+  diffwalk: "0",
 };
 
 const hypertensionInitial = {
@@ -45,7 +48,10 @@ export default function HealthForm() {
     age: "Age",
     sex: "Sex",
     bmi: "BMI",
-    glucose: "Fasting Glucose",
+    highbp: "High Blood Pressure",
+    highchol: "High Cholesterol",
+    genhlth: "General Health",
+    diffwalk: "Difficulty Walking",
     trestbps: "Resting BP",
     chol: "Cholesterol",
     fbs: "Fasting Blood Sugar",
@@ -84,7 +90,10 @@ export default function HealthForm() {
           disease: "diabetes",
           age: Number(form.age),
           bmi: Number(form.bmi),
-          glucose: Number(form.glucose),
+          highbp: Number(form.highbp),
+          highchol: Number(form.highchol),
+          genhlth: Number(form.genhlth),
+          diffwalk: Number(form.diffwalk),
         };
       } else {
         // 🔥 EXACT FEATURES USED BY MODEL
@@ -146,18 +155,42 @@ export default function HealthForm() {
         />
 
         {/* =========================
-           DIABETES
+           DIABETES (BRFSS)
         ========================= */}
         {form.disease === "diabetes" && (
           <div className="grid md:grid-cols-2 gap-4">
             <Input label="Age (years)" name="age" value={form.age} onChange={handleChange} />
             <Input label="BMI" name="bmi" value={form.bmi} onChange={handleChange} />
-            <Input
-              label="Fasting Glucose (mg/dL)"
-              name="glucose"
-              value={form.glucose}
-              onChange={handleChange}
-              full
+            
+            <Select label="High Blood Pressure" name="highbp" value={form.highbp} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
+              ]}
+            />
+            
+            <Select label="High Cholesterol" name="highchol" value={form.highchol} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
+              ]}
+            />
+            
+            <Select label="General Health" name="genhlth" value={form.genhlth} onChange={handleChange}
+              options={[
+                { label: "Excellent", value: "1" },
+                { label: "Very Good", value: "2" },
+                { label: "Good", value: "3" },
+                { label: "Fair", value: "4" },
+                { label: "Poor", value: "5" },
+              ]}
+            />
+            
+            <Select label="Difficulty Walking/Stairs" name="diffwalk" value={form.diffwalk} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
+              ]}
             />
           </div>
         )}

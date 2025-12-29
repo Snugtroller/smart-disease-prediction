@@ -22,15 +22,21 @@ def get_disease_features(disease: str, payload: Dict[str, Any]) -> pd.DataFrame:
     """
 
     # -------------------------
-    # DIABETES (XGBoost)
+    # DIABETES (XGBoost) - BRFSS features
     # -------------------------
     if disease == "diabetes":
-        _require_fields(payload, ["age", "bmi", "glucose"])
+        _require_fields(
+            payload,
+            ["age", "bmi", "highbp", "highchol", "genhlth", "diffwalk"]
+        )
 
         features = {
-            "age": float(payload["age"]),
-            "bmi": float(payload["bmi"]),
-            "glucose": float(payload["glucose"]),
+            "Age": float(payload["age"]),
+            "BMI": float(payload["bmi"]),
+            "HighBP": int(payload["highbp"]),
+            "HighChol": int(payload["highchol"]),
+            "GenHlth": int(payload["genhlth"]),
+            "DiffWalk": int(payload["diffwalk"]),
         }
 
     # -------------------------
@@ -91,12 +97,14 @@ def predict_disease_risk(
     # -------------------------
     model_features = getattr(model, "feature_names_in_", None)
     if model_features is not None:
-        if list(input_df.columns) != list(model_features):
+        if set(input_df.columns) != set(model_features):
             raise ValueError(
                 f"Feature mismatch!\n"
-                f"Input: {list(input_df.columns)}\n"
-                f"Model: {list(model_features)}"
+                f"Input: {set(input_df.columns)}\n"
+                f"Model: {set(model_features)}"
             )
+        # Reorder input to match model's feature order
+        input_df = input_df[model_features]
 
     # -------------------------
     # PREDICTION
