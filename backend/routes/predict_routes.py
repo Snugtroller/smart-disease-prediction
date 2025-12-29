@@ -16,21 +16,36 @@ def predict():
       "disease": "diabetes",
       "age": 45,
       "bmi": 27.3,
-      "glucose": 145
+      "highbp": 1,
+      "highchol": 1,
+      "genhlth": 3,
+      "diffwalk": 0
     }
 
-        For Hypertension:
-        {
-            "disease": "hypertension",
-            "age": 55,
-            "sex": 1,
-            "trestbps": 140,
-            "chol": 250,
-            "fbs": 0,
-            "restecg": 1,
-            "exang": 0,
-            "slope": 2
-        }
+    For Hypertension:
+    {
+      "disease": "hypertension",
+      "age": 55,
+      "sex": 1,
+      "trestbps": 140,
+      "chol": 250,
+      "fbs": 0,
+      "restecg": 1,
+      "exang": 0,
+      "slope": 2
+    }
+
+    For Stroke:
+    {
+      "disease": "stroke",
+      "age": 50,
+      "hypertension": 1,
+      "heart_disease": 0,
+      "avg_glucose_level": 150,
+      "bmi": 28.5,
+      "smoking_status": 1,
+      "ever_married": 1
+    }
     """
     try:
         payload = request.get_json(force=True)
@@ -39,8 +54,8 @@ def predict():
         if disease == "heart":
             return jsonify({"error": "Heart disease model is not available right now"}), 400
 
-        if disease not in {"diabetes", "hypertension"}:
-            return jsonify({"error": "Unsupported disease type. Use: diabetes or hypertension"}), 400
+        if disease not in {"diabetes", "hypertension", "stroke"}:
+            return jsonify({"error": "Unsupported disease type. Use: diabetes, hypertension, or stroke"}), 400
 
         disease_models = current_app.config["DISEASE_MODELS"]
         advice_generator = current_app.config.get("ADVICE_GENERATOR")

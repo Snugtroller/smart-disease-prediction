@@ -69,6 +69,34 @@ def get_disease_features(disease: str, payload: Dict[str, Any]) -> pd.DataFrame:
             "slope": int(payload["slope"]),
         }
 
+    # -------------------------
+    # STROKE (XGBoost)
+    # -------------------------
+    elif disease == "stroke":
+        # 🔥 EXACT features used in stroke model
+        _require_fields(
+            payload,
+            [
+                "age",
+                "hypertension",
+                "heart_disease",
+                "avg_glucose_level",
+                "bmi",
+                "smoking_status",
+                "ever_married",
+            ],
+        )
+
+        features = {
+            "age": float(payload["age"]),
+            "hypertension": int(payload["hypertension"]),
+            "heart_disease": int(payload["heart_disease"]),
+            "avg_glucose_level": float(payload["avg_glucose_level"]),
+            "bmi": float(payload["bmi"]),
+            "smoking_status": int(payload["smoking_status"]),
+            "ever_married": int(payload["ever_married"]),
+        }
+
     else:
         raise ValueError(f"Unsupported disease type: {disease}")
 
@@ -111,12 +139,23 @@ def predict_disease_risk(
     # -------------------------
     risk_score = float(model.predict_proba(input_df)[0][1])
 
-    if risk_score >= 0.7:
-        risk_label = "High"
-    elif risk_score >= 0.4:
-        risk_label = "Moderate"
+    # Disease-specific thresholds
+    if disease == "stroke":
+        # Stroke uses different thresholds
+        if risk_score >= 0.6:
+            risk_label = "High"
+        elif risk_score >= 0.4:
+            risk_label = "Moderate"
+        else:
+            risk_label = "Low"
     else:
-        risk_label = "Low"
+        # Default thresholds for diabetes and hypertension
+        if risk_score >= 0.7:
+            risk_label = "High"
+        elif risk_score >= 0.4:
+            risk_label = "Moderate"
+        else:
+            risk_label = "Low"
 
     # -------------------------
     # SHAP EXPLANATION
@@ -126,6 +165,7 @@ def predict_disease_risk(
     disease_name = {
         "diabetes": "Type 2 Diabetes",
         "hypertension": "Hypertension",
+        "stroke": "Stroke Risk",
     }[disease]
 
     # -------------------------
@@ -136,7 +176,10 @@ def predict_disease_risk(
         feature_labels = {
             "age": "Age", "sex": "Sex", "bmi": "BMI", "glucose": "Fasting Glucose",
             "trestbps": "Resting BP", "chol": "Cholesterol", "fbs": "Fasting Blood Sugar",
-            "restecg": "Resting ECG", "exang": "Exercise Angina", "slope": "ST Slope"
+            "restecg": "Resting ECG", "exang": "Exercise Angina", "slope": "ST Slope",
+            "hypertension": "Hypertension", "heart_disease": "Heart Disease",
+            "avg_glucose_level": "Avg Glucose", "smoking_status": "Smoking Status",
+            "ever_married": "Ever Married"
         }
         factors_list = [
             f"{feature_labels.get(e['feature'], e['feature'])}: {e['value']:.1f}"

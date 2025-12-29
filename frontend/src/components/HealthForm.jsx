@@ -29,6 +29,17 @@ const hypertensionInitial = {
   slope: "1",
 };
 
+const strokeInitial = {
+  disease: "stroke",
+  age: "",
+  hypertension: "0",
+  heart_disease: "0",
+  avg_glucose_level: "",
+  bmi: "",
+  smoking_status: "0",
+  ever_married: "0",
+};
+
 /* =========================
    COMPONENT
 ========================= */
@@ -58,6 +69,11 @@ export default function HealthForm() {
     restecg: "Resting ECG",
     exang: "Exercise Angina",
     slope: "ST Slope",
+    hypertension: "Hypertension",
+    heart_disease: "Heart Disease",
+    avg_glucose_level: "Avg Glucose Level",
+    smoking_status: "Smoking Status",
+    ever_married: "Ever Married",
   };
 
   /* =========================
@@ -66,7 +82,15 @@ export default function HealthForm() {
 
   const handleDiseaseChange = (e) => {
     const disease = e.target.value;
-    setForm(disease === "diabetes" ? diabetesInitial : hypertensionInitial);
+    let initialState;
+    if (disease === "diabetes") {
+      initialState = diabetesInitial;
+    } else if (disease === "hypertension") {
+      initialState = hypertensionInitial;
+    } else if (disease === "stroke") {
+      initialState = strokeInitial;
+    }
+    setForm(initialState);
     setResult(null);
     setError("");
   };
@@ -95,8 +119,7 @@ export default function HealthForm() {
           genhlth: Number(form.genhlth),
           diffwalk: Number(form.diffwalk),
         };
-      } else {
-        // 🔥 EXACT FEATURES USED BY MODEL
+      } else if (form.disease === "hypertension") {
         payload = {
           disease: "hypertension",
           age: Number(form.age),
@@ -107,6 +130,18 @@ export default function HealthForm() {
           restecg: Number(form.restecg),
           exang: Number(form.exang),
           slope: Number(form.slope),
+        };
+      } else {
+        // stroke
+        payload = {
+          disease: "stroke",
+          age: Number(form.age),
+          hypertension: Number(form.hypertension),
+          heart_disease: Number(form.heart_disease),
+          avg_glucose_level: Number(form.avg_glucose_level),
+          bmi: Number(form.bmi),
+          smoking_status: Number(form.smoking_status),
+          ever_married: Number(form.ever_married),
         };
       }
 
@@ -121,7 +156,15 @@ export default function HealthForm() {
   };
 
   const handleReset = () => {
-    setForm(form.disease === "diabetes" ? diabetesInitial : hypertensionInitial);
+    let initialState;
+    if (form.disease === "diabetes") {
+      initialState = diabetesInitial;
+    } else if (form.disease === "hypertension") {
+      initialState = hypertensionInitial;
+    } else if (form.disease === "stroke") {
+      initialState = strokeInitial;
+    }
+    setForm(initialState);
     setResult(null);
     setError("");
   };
@@ -151,6 +194,7 @@ export default function HealthForm() {
           options={[
             { label: "Type 2 Diabetes", value: "diabetes" },
             { label: "Hypertension", value: "hypertension" },
+            { label: "Stroke Risk", value: "stroke" },
           ]}
         />
 
@@ -239,6 +283,48 @@ export default function HealthForm() {
                 { label: "Upsloping", value: "0" },
                 { label: "Flat", value: "1" },
                 { label: "Downsloping", value: "2" },
+              ]}
+            />
+          </div>
+        )}
+
+        {/* =========================
+           STROKE
+        ========================= */}
+        {form.disease === "stroke" && (
+          <div className="grid md:grid-cols-2 gap-4">
+            <Input label="Age (years)" name="age" value={form.age} onChange={handleChange} />
+            
+            <Select label="Hypertension" name="hypertension" value={form.hypertension} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
+              ]}
+            />
+            
+            <Select label="Heart Disease" name="heart_disease" value={form.heart_disease} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
+              ]}
+            />
+            
+            <Input label="Average Glucose Level (mg/dL)" name="avg_glucose_level" value={form.avg_glucose_level} onChange={handleChange} />
+            
+            <Input label="BMI" name="bmi" value={form.bmi} onChange={handleChange} />
+            
+            <Select label="Smoking Status" name="smoking_status" value={form.smoking_status} onChange={handleChange}
+              options={[
+                { label: "Never Smoked", value: "0" },
+                { label: "Formerly Smoked", value: "1" },
+                { label: "Smokes", value: "2" },
+              ]}
+            />
+            
+            <Select label="Ever Married" name="ever_married" value={form.ever_married} onChange={handleChange}
+              options={[
+                { label: "No", value: "0" },
+                { label: "Yes", value: "1" },
               ]}
             />
           </div>

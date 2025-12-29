@@ -30,6 +30,9 @@ def load_disease_models() -> Dict[str, Any]:
         "hypertension": _safe_load_model(
             os.path.join(MODELS_DIR, "hypertension_rf_calibrated.pkl")
         ),
+        "stroke": _safe_load_model(
+            os.path.join(MODELS_DIR, "stroke_xgb.pkl")
+        ),
         # Heart disease can be added later
         "heart": None,
     }
