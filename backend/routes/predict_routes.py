@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, request, jsonify
 
 from services.prediction_service import predict_disease_risk
+from services.cache_service import advice_cache, chatbot_cache
 
 predict_bp = Blueprint("predict_bp", __name__)
 

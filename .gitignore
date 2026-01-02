@@ -63,6 +63,7 @@ yarn-error.log*
 *.sqlite3
 
 # Model files (if large)
+*.ipynb
 *.h5
 *.pkl
 *.joblib

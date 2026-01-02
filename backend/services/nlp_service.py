@@ -5,6 +5,9 @@ import os
 import random
 import logging
 
+# Import cache service
+from .cache_service import chatbot_cache
+
 # -----------------------------------------------------------------------------
 # Configuration & Initialization
 # -----------------------------------------------------------------------------
@@ -31,8 +34,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 if GEMINI_AVAILABLE and GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        gemini_model = genai.GenerativeModel("gemini-2.5-flash")  
-        logger.info("[INFO] Gemini AI initialized successfully for MannMitra")
+        # Use gemini-2.5-flash (available and performant)
+        gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+        logger.info("[INFO] Gemini AI (2.5-flash) initialized for MannMitra")
     except Exception as e:  # pragma: no cover - defensive
         gemini_model = None
         logger.error(f"[ERROR] Failed to initialize Gemini AI: {e}")
@@ -177,6 +181,13 @@ def generate_ai_response(message: str, sentiment: str) -> str:
 
     try:
         prompt = _build_gemini_prompt(message, sentiment)
+        
+        # Try cache first
+        cached = chatbot_cache.get(sentiment, message)
+        if cached:
+            logger.info("[CACHE HIT] Chatbot response")
+            return cached
+        
         response = gemini_model.generate_content(prompt)
         text = (response.text or "").strip()
         if not text:
@@ -190,6 +201,9 @@ def generate_ai_response(message: str, sentiment: str) -> str:
                 "or overwhelmed, please consider contacting local emergency "
                 "services, a trusted person, or a professional helpline in your area."
             )
+        # Cache the response
+        chatbot_cache.set(sentiment, message, text)
+        logger.info("[CACHE MISS] Generated chatbot response")
         return text
 
     except Exception as e:  # pragma: no cover - defensive

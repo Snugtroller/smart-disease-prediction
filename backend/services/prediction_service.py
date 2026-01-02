@@ -2,6 +2,7 @@ from typing import Dict, Any, List
 import pandas as pd
 
 from .xai_service import explain_with_shap
+from .cache_service import advice_cache
 
 
 # =========================
@@ -138,6 +139,8 @@ def predict_disease_risk(
     # PREDICTION
     # -------------------------
     risk_score = float(model.predict_proba(input_df)[0][1])
+    if disease == "hypertension":
+        risk_score = 1.0 - risk_score
 
     # Disease-specific thresholds
     if disease == "stroke":
@@ -148,8 +151,15 @@ def predict_disease_risk(
             risk_label = "Moderate"
         else:
             risk_label = "Low"
+    elif disease == "hypertension":
+        if risk_score >= 0.67:
+            risk_label = "High"
+        elif risk_score >= 0.33:
+            risk_label = "Moderate"
+        else:
+            risk_label = "Low"
     else:
-        # Default thresholds for diabetes and hypertension
+        # Default thresholds for diabetes
         if risk_score >= 0.7:
             risk_label = "High"
         elif risk_score >= 0.4:
@@ -169,10 +179,16 @@ def predict_disease_risk(
     }[disease]
 
     # -------------------------
-    # Gemini AI ADVICE
+    # Gemini AI ADVICE (with caching)
     # -------------------------
-    if advice_generator is not None:
-        # Build prompt with disease context using feature labels
+    advice_text = None
+    
+    # Try to get from cache first
+    cached_advice = advice_cache.get(disease, risk_label, explanation)
+    if cached_advice:
+        advice_text = cached_advice
+        print(f"[CACHE HIT] Using cached advice for {disease} ({risk_label} risk)")
+    elif advice_generator is not None:
         feature_labels = {
             "age": "Age", "sex": "Sex", "bmi": "BMI", "glucose": "Fasting Glucose",
             "trestbps": "Resting BP", "chol": "Cholesterol", "fbs": "Fasting Blood Sugar",
@@ -195,21 +211,34 @@ def predict_disease_risk(
         )
 
         try:
+            print(f"[DEBUG] Calling Gemini API for {disease} ({risk_label})")
             response = advice_generator.generate_content(advice_prompt)
+            print(f"[DEBUG] API response received: {response}")
             advice_text = response.text.strip() if response and hasattr(response, 'text') else None
+            print(f"[DEBUG] Extracted text: {advice_text[:80] if advice_text else 'NONE'}...")
             
             # Only use generated text if it's substantial
-            if not advice_text or len(advice_text) < 30:
+            if advice_text and len(advice_text) >= 30:
+                # Store in cache for future requests
+                advice_cache.set(disease, risk_label, explanation, advice_text)
+                print(f"[SUCCESS] Generated and cached AI advice ({len(advice_text)} chars)")
+            else:
+                print(f"[WARN] Generated text too short ({len(advice_text) if advice_text else 0} chars), using fallback")
                 advice_text = None
             
         except Exception as e:
-            print(f"[WARN] Gemini advice generation failed: {e}")
-            advice_text = None
-    else:
-        advice_text = None
-
-    # Fallback to static advice if Gemini fails or is unavailable
-    if not advice_text:
+            error_msg = str(e)
+            print(f"[ERROR] Gemini API error: {type(e).__name__}: {error_msg[:100]}")
+            if "not found" in error_msg or "not supported" in error_msg:
+                # Model not available, use fallback silently
+                advice_text = None
+            else:
+                # Other errors, log them
+                print(f"[WARN] Gemini advice generation failed: {e}")
+                advice_text = None
+    
+    # Fallback to static advice if cache miss AND Gemini not available/failed
+    if advice_text is None:
         advice_map = {
             "High": (
                 f"Your {disease_name} risk is high. "

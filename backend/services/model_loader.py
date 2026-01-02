@@ -56,16 +56,16 @@ def load_nlp_models() -> Dict[str, Any]:
 
     sentiment_analyzer = pipeline("sentiment-analysis")
     
-    # Use Gemini for advice generation (same as chatbot) - use stable model
+    # Use Gemini for advice generation (same as chatbot) - use free tier friendly model
     try:
         import google.generativeai as genai
         GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
         
         if GEMINI_API_KEY:
             genai.configure(api_key=GEMINI_API_KEY)
-            # Use gemini-1.5-flash (stable model with better quota)
-            advice_generator = genai.GenerativeModel("gemini-1.5-flash")
-            print("[INFO] Gemini AI (1.5-flash) initialized for advice generation")
+            # Use gemini-2.5-flash (available and performant)
+            advice_generator = genai.GenerativeModel("gemini-2.5-flash")
+            print("[INFO] Gemini AI (2.5-flash) initialized for advice generation")
         else:
             advice_generator = None
             print("[WARN] GEMINI_API_KEY not set. Using static advice.")
